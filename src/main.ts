@@ -1,40 +1,57 @@
 ///<reference path="../typings/tsd.d.ts"/>
-import * as _ from 'lodash';
+import {Promise} from 'es6-promise';
 import LastFmApi from './lib/lastfm-api';
 import chartLyrics from './lib/chartlyrics-api'
-import {Promise} from 'es6-promise';
 
-interface WordCounter {
-    [name:string]: number;
-}
+// start Main as soon as current code stack is done
+setImmediate(()=>Main.main('Manowar'));
+
+/**
+ * There's no real reason to use a "main" class here. It is not required by TS
+ * nor it is needed for JS in general. But I just wanted to go with it for no
+ * specific reason.
+ * @class Main (static)
+ */
 class Main {
-    static topTracks = 50;
-    static apiKey = '11fa3732789f78bf2fef8f3fd106f1ad';
-
-    private lastFm:LastFmApi;
-    private artist:string;
-
-    constructor(artist:string) {
-        this.lastFm = new LastFmApi(Main.apiKey);
-        this.artist = artist;
+    constructor() {
+        throw new Error('main is static and cannot be instantiated');
     }
 
-    analyze() {
-        console.log(`Getting ${Main.topTracks} top track for: ${this.artist}`);
-        this.lastFm.getTopTracks(this.artist, Main.topTracks)
+    /**
+     * Application entry point
+     * @param {string} artistName
+     */
+    static main(artistName:string):void {
+        // Go to http://www.last.fm/api to generate your own key
+        var apiKey = '11fa3732789f78bf2fef8f3fd106f1ad';
+        var lastFm = new LastFmApi(apiKey);
+
+        var topTracks = 50;
+        var artist:string = artistName;
+
+        console.log(`Getting ${topTracks} top track for: ${artist}`);
+        lastFm.getTopTracks(artist, topTracks)
             .then(result => result.map(track => track.name))
             //.then(tracks => this.fetchLyrics(tracks))
-            .then(tracks => this.queueLyricsFetch(tracks))
-            .then(result => this.prepareStatistics(result.join(' ')))
+            .then(tracks => Main.queueLyricsFetch(artist, tracks))
+            .then(result => Main.prepareStatistics(artist, result.join(' ')))
             .catch(reason => {
                 console.error(reason.stack || reason.toString());
             });
     }
 
-    queueLyricsFetch(tracks:Array<string>):Promise<any> {
-        //tracks = tracks.slice(28, 32);
+    /**
+     * Queues ChartLyrics queries for SearchLyric and GetLyric. Each query will
+     * be throttled to be sent evey 0.5 second, otherwise ChartLyrics server
+     * drops connections.
+     * @see module:lib/chartlyrics-api
+     * @param artist
+     * @param tracks
+     * @return {Promise}
+     */
+    static queueLyricsFetch(artist:string, tracks:Array<string>):Promise<any> {
         var allLyrics = [],
-            artistName = this.artist,
+            artistName = artist,
             originalLength = tracks.length,
             i = 1;
         console.log(tracks);
@@ -76,9 +93,12 @@ class Main {
         });
     }
 
-    prepareStatistics(text:string):void;
-    prepareStatistics(texts:Array<string>):void;
-    prepareStatistics(arg:any):void {
+    /**
+     * Run basic statistics analysis and prints it out
+     * @param {string} artist
+     * @param {string|string[]} arg
+     */
+    static prepareStatistics(artist:string, arg:string|Array<string>):void {
         var text = typeof arg === 'string' ? arg : (Array.isArray(arg) ? arg.join(' ') : (arg.toString() || ''));
         var words = text.toLowerCase().replace(/[^a-z ]/g, '').split(' ');
 
@@ -97,12 +117,18 @@ class Main {
         }
         sortable.sort((a, b) => b[0] - a[0]);
 
-        console.log(`\nAnalyzing ${this.artist} lyrics...`);
+        console.log(`\nAnalyzing ${artist} lyrics...`);
         console.log(`\tFound ${words.length} words`);
         console.log(`\tFound ${unique.length} unique words:`);
         sortable.forEach(word => console.log(`\t\t${word[0]}: ${word[1]}`));
     }
 
+    /**
+     * Increments the <var>counter</var> value for <var>word</var>
+     * @param {string} word
+     * @param {WordCounter} counter
+     * @returns {string}
+     */
     static countWord(word:string, counter:WordCounter):string {
         if (typeof counter[word] === 'undefined') counter[word] = 0;
         counter[word]++;
@@ -111,4 +137,7 @@ class Main {
 
 }
 
-new Main('Manowar').analyze();
+interface WordCounter {
+    [name:string]: number;
+}
+

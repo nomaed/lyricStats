@@ -1,34 +1,15 @@
 ///<reference path="../../typings/tsd.d.ts"/>
-import * as _ from 'lodash';
-import {Rest, RestOptions} from './rest';
+/**
+ * ChartLyrics public API implementation
+ * http://www.chartlyrics.com/api.aspx
+ *
+ * @module lib/chartlyrics-api
+ */
+
 import {Promise} from 'es6-promise';
 import {parseString as xml2js} from 'xml2js';
-
-interface SearchLyricResult {
-    TrackChecksum: string
-    TrackId: number
-    LyricChecksum: string
-    LyricId: number
-    SongUrl: string
-    ArtistUrl: string
-    Artist: string
-    Song: string
-    SongRank: number
-}
-
-interface GetLyricResult {
-    TrackChecksum: string
-    TrackId: number
-    LyricChecksum: string
-    LyricId: number
-    LyricSong: string
-    LyricArtist: string
-    LyricUrl: string
-    LyricCovertArtUrl: string
-    LyricRank: number
-    LyricCorrectUrl: string
-    Lyric: string
-}
+import * as _ from 'lodash';
+import {Rest, RestOptions} from './rest';
 
 class ChartLyricsApi {
     private static apiUrl = 'http://api.chartlyrics.com/apiv1.asmx/:method';
@@ -40,9 +21,9 @@ class ChartLyricsApi {
 
     /**
      * Search for lyrics and return the lyricId and lyricChecksum for the GetLyric function
-     * @param artistName
-     * @param trackName
-     * @param onlyExactMatch
+     * @param {string} artistName
+     * @param {string} trackName
+     * @param {boolean=} onlyExactMatch
      * @returns {Promise<SearchLyricResult[]>}
      */
     public searchLyric(artistName:string, trackName:string, onlyExactMatch:boolean = false):Promise<SearchLyricResult[]> {
@@ -62,8 +43,8 @@ class ChartLyricsApi {
 
     /**
      * Search for lyrics by artist and track and directly returns the lyric or lyric add parameters.
-     * @param artistName
-     * @param trackName
+     * @param {string} artistName
+     * @param {string} trackName
      * @returns {Promise<GetLyricResult>}
      */
     public searchLyricDirect(artistName:string, trackName:string):Promise<GetLyricResult> {
@@ -77,7 +58,7 @@ class ChartLyricsApi {
 
     /**
      * Search for text in lyric and returns the lyricId and lyricChecksum for the GetLyric function
-     * @param lyricText
+     * @param {string} lyricText
      * @returns {Promise<SearchLyricResult[]>}
      */
     public searchLyricText(lyricText:string):Promise<SearchLyricResult[]> {
@@ -91,8 +72,8 @@ class ChartLyricsApi {
 
     /**
      * Return lyric with lyric text, correction URL, Lyric rankigs and an URL to the album cover if applicable.
-     * @param lyricId
-     * @param lyricCheckSum
+     * @param {number} lyricId
+     * @param {string} lyricCheckSum
      * @returns {Promise<GetLyricResult>}
      */
     public getLyric(lyricId:number, lyricCheckSum:string):Promise<GetLyricResult> {
@@ -104,10 +85,10 @@ class ChartLyricsApi {
 
     /**
      * Add lyric with lyric text and email.
-     * @param trackId
-     * @param trackCheckSum
-     * @param lyric
-     * @param email
+     * @param {number} trackId
+     * @param {string} trackCheckSum
+     * @param {string} lyric
+     * @param {string} email
      * @returns {Promise<string>}
      */
     public addLyric(trackId:number, trackCheckSum:string, lyric:string, email:string):Promise<string> {
@@ -121,8 +102,8 @@ class ChartLyricsApi {
 
     /**
      * Runs a ChartLytics HTTP API query for {{method}}, using {{options}} as query string
-     * @param method
-     * @param options
+     * @param {string} method
+     * @param {RestOptions} options
      * @returns {Promise}
      */
     private runQuery(method:string, options:RestOptions):Promise<any> {
@@ -156,12 +137,46 @@ class ChartLyricsApi {
         });
     }
 
+    /**
+     * Checks if an artist+track are an exact match with a specific <em>SearchLyricResult</em>
+     * @param {SearchLyricResult} song
+     * @param {string} artistName
+     * @param {string} trackName
+     * @returns {boolean}
+     * @private
+     */
     private static matchArtistTrack(song:SearchLyricResult, artistName:string, trackName:string):boolean {
         return song && song.Artist && song.Song
             && song.Artist.toLowerCase() === artistName.toLowerCase()
             && song.Song.toLowerCase() === trackName.toLowerCase();
     }
 
+}
+
+interface SearchLyricResult {
+    TrackChecksum: string
+    TrackId: number
+    LyricChecksum: string
+    LyricId: number
+    SongUrl: string
+    ArtistUrl: string
+    Artist: string
+    Song: string
+    SongRank: number
+}
+
+interface GetLyricResult {
+    TrackChecksum: string
+    TrackId: number
+    LyricChecksum: string
+    LyricId: number
+    LyricSong: string
+    LyricArtist: string
+    LyricUrl: string
+    LyricCovertArtUrl: string
+    LyricRank: number
+    LyricCorrectUrl: string
+    Lyric: string
 }
 
 export default new ChartLyricsApi();

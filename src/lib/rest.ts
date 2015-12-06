@@ -1,10 +1,11 @@
 ///<reference path="../../typings/tsd.d.ts"/>
+/**
+ * Simple REST/HTTP-get helper
+ * @module lib/rest
+ */
+
 import * as http from 'http';
 import {Promise} from 'es6-promise';
-
-export interface RestOptions {
-    [name:string]: string|number;
-}
 
 export class Rest {
     private baseUrl:string;
@@ -13,29 +14,12 @@ export class Rest {
         this.baseUrl = baseUrl;
     }
 
-    private buildUrl(opts?:RestOptions) {
-        var urlParams = '',
-            urlBase = this.baseUrl;
-        if (opts) {
-            urlParams += (urlBase.indexOf('?') === -1 ? '?' : '&');
-            var params:string[] = [];
-            for (var opt in opts) {
-                if (!opts.hasOwnProperty(opt)) continue;
-                var val:string = ''+opts[opt],
-                    match = new RegExp(`:${opt}\\b`);
-                if (match.test(urlBase)) {
-                    urlBase = urlBase.replace(match, val);
-                }
-                else {
-                    params.push(`${opt}=${encodeURIComponent(val)}`);
-                }
-            }
-            urlParams += params.join('&');
-        }
-        return urlBase + urlParams;
-    }
-
-    public get(opts:RestOptions):Promise<string> {
+    /**
+     * Sends a HTTP GET request and returns the response body
+     * @param {RestOptions=} opts Query string pairs and placeholder replacements for <var><em>this</em>.baseUrl</var>
+     * @return {Promise<string>}
+     */
+    public get(opts?:RestOptions):Promise<string> {
         var url = this.buildUrl(opts);
         return new Promise<string>((resolve, reject) => {
             //console.log(`HTTP GET ${url}`);
@@ -48,4 +32,34 @@ export class Rest {
             });
         });
     }
+
+    /**
+     * Uses <var>opts</var> keys to replace placeholders in <var><em>this</em>.baseUrl</var>,
+     * and uses remaining <var>opts</var> to append as a query string.
+     * @param {RestOptions=} opts
+     * @returns {string} URL
+     * @private
+     */
+    private buildUrl(opts?:RestOptions) {
+        if (!opts) return this.baseUrl;
+        var urlBase = this.baseUrl,
+            queryParams:string[] = [];
+        for (var opt in opts) {
+            if (!opts.hasOwnProperty(opt)) continue;
+            var val:string = '' + opts[opt],
+                match = new RegExp(`:${opt}\\b`);
+            if (match.test(urlBase)) {
+                urlBase = urlBase.replace(match, val);
+            }
+            else {
+                queryParams.push(`${opt}=${encodeURIComponent(val)}`);
+            }
+        }
+        return urlBase + (urlBase.indexOf('?') === -1 ? '?' : '&') + queryParams.join('&');
+    }
+
+}
+
+export interface RestOptions {
+    [name:string]: string|number;
 }

@@ -22,12 +22,13 @@ coverage
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
-built
+/built
 .idea
 
 # Dependency directory
 # https://docs.npmjs.com/misc/faq#should-i-check-my-node-modules-folder-into-git
 node_modules
+/out
 
 # =========================
 # Operating System Files

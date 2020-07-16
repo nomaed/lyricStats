@@ -5,7 +5,7 @@
   "main": "main.js",
   "dependencies": {
     "es6-promise": "^3.0.2",
-    "lodash": "^4.17.13",
+    "lodash": "^4.17.19",
     "typescript": "^1.7.3",
     "xml2js": "^0.4.15"
   },
